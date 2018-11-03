@@ -1,5 +1,6 @@
-float myTeplota1, myTeplota2, myTeplota3, myTlak1, myVlhkost1, Vcc;
-char zprava[12], t1, t2, t3, v1, p1, n1; //SigFox zpráva a proměnné
+float myTeplota1, myTeplota2, myTeplota3, myTlak1, myVlhkost1, Vcc; //programove globalni promenne
+char zprava[12]; //SigFox zpráva
+int t1, t2, t3, v1, p1, n1; //SigFox proměnné
 
 // potřebné knihovny
 #include <SoftwareSerial.h>
@@ -34,7 +35,7 @@ DeviceAddress Probe02 = { 0x28, 0xFF, 0x12, 0x82, 0x02, 0x17, 0x03, 0x46 }; //Zl
 // hodnota 1 simuluje impuls po zapnutí, aby jsme nečekali
 volatile int impuls_z_wdt = 1;
 // zde se ukládají impulsy
-volatile int citac_impulsu = 2;
+volatile int citac_impulsu = 75;
 // zde nastavíme potřebný počet impulsů
 // podle nastavení WDT viz níže je jeden impuls 8 sekund
 volatile int impulsu_ke_spusteni = 75; // ...kazdych 10 minut
@@ -179,20 +180,21 @@ void loop()
      * Callback URL
      * http://itrubec.cz/monitor/newdata.php?key=bflmpsvz&dev={device}&t1={customData#t1}&t2={customData#t2}&t3={customData#t3}&v1={customData#v1}&p2={customData#p1}&n1={customData#n1}&rssi={rssi}&seqn={seqNumber}&lat={lat}&lng={lng}
      * Format zpravy
-     * t1::char:1 t2::char:1 t3::char:1 v1::char:1 p1::char:1 n1::char:1
+     * t1::uint:8 t2::uint:8 t3::uint:8 v1::uint:8 p1::uint:8 n1::uint:8
+     * t1::int:8 t2::int:8 t3::int:8 v1::int:8 p1::int:8 n1::int:8
     */
-    //teploty zaokrouhlíme na celá čísla a přičteme k nim 50
-    t1 = char(int(round(myTeplota1))+50);
-    t2 = char(int(round(myTeplota3))+50);
-    t3 = char(int(round(myTeplota3))+50);
+    //teploty a zaokrouhlíme na celá čísla a přičteme 50 (50 => 0 stupnu celsia)
+    t1 = int(round(myTeplota1)+50);
+    t2 = int(round(myTeplota2)+50);
+    t3 = int(round(myTeplota3)+50);
     //vlhkost zaokrouhlíme na celé číslo
-    v1 = char(int(round(myVlhkost1)));
-    //tlak zaokrouhlíme na celé číslo a odečteme od něj 950 (1013 - 63)
-    p1 = char(int(round(myTlak1))-63);
+    v1 = int(round(myVlhkost1));
+    //tlak zaokrouhlíme na celé číslo a odečteme od něj 885 (1013-128) => 128 odpovídá 1013 hPa
+    p1 = int(round(myTlak1)-885);
     //napeti napajeni vynasobime 10 a zaokrouhlime na cele cislo
-    n1 = char(int(round(myTlak1*10)));
+    n1 = int(round(Vcc*10));
     //naformatovani zpravy k odeslani pres sigfox
-    sprintf(zprava, "%c%c%c%c%c%c", t1, t2, t3, v1, p1, n1);
+    sprintf(zprava, "%02X%02X%02X%02X%02X%02X", t1, t2, t3, v1, p1, n1);
     Serial.print("Sigfox tvar zpravy: ");
     Serial.println(zprava);
     //odeslani zpravy do SigFox
