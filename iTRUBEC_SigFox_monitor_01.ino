@@ -178,10 +178,10 @@ void loop()
     Serial.println(" hPa");
     //Zjisteni stavu baterie (napeti napajeni)
     Vcc=readVcc(); //hodnota v mV
-    Vcc=ceil(Vcc/1000);//hodnota ve V
+    Vcc=ceil(Vcc/100);//hodnota v desetinách V
     Serial.print("Napajeni: ");
     Serial.print(Vcc);
-    Serial.println(" V");
+    Serial.println(" desetin V");
     //Sestavení zpravy pro SigFox
     /*
      * Callback URL
@@ -204,7 +204,7 @@ void loop()
     p1 = int(round(myTlak1)-885);
     p1 = Correct(p1);
     //napeti napajeni vynasobime 10 a zaokrouhlime na cele cislo
-    n1 = int(round(Vcc*10));
+    n1 = int(round(Vcc));
     n1 = Correct(n1);
     //naformatovani zpravy k odeslani pres sigfox
     sprintf(zprava, "%02X%02X%02X%02X%02X%02X", t1, t2, t3, v1, p1, n1);
