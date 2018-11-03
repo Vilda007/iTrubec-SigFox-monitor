@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS `monitor_data` (
 */
 
 //http://itrubec.cz/monitor/newdata.php?key=xxxxxxxxx&dev=xxxxxxxxx&t1=76&t2=75&t3=75&v1=45&p1=116&n1=50&rssi=-136.00&seqn=23&lat=49.0&lng=17.0&snr=11.84&avgsnr=23.84
+/*
 $key = $_POST["key"];
 $dev = $_POST["dev"];
 $t1 = $_POST["t1"];
@@ -85,11 +86,26 @@ $lat = $_POST["lat"];
 $lng = $_POST["lng"];
 $snr = $_POST["snr"];
 $avgsnr = $_POST["avgsnr"];
+*/
+$key = $_GET["key"];
+$dev = $_GET["dev"];
+$t1 = $_GET["t1"];
+$t2 = $_GET["t2"];
+$t3 = $_GET["t3"];
+$v1 = $_GET["v1"];
+$p1 = $_GET["p1"];
+$n1 = $_GET["n1"];
+$rssi = $_GET["rssi"];
+$seqn = $_GET["seqn"];
+$lat = $_GET["lat"];
+$lng = $_GET["lng"];
+$snr = $_GET["snr"];
+$avgsnr = $_GET["avgsnr"];
 
 $t1 = $t1 - 50;
 $t2 = $t2 - 50;
 $t3 = $t3 - 50;
-$p1 = $p1 + 850;
+$p1 = $p1 + 885;
 $n1 = $n1 / 10;
 
 //SELECT ID FROM `monitor_devices` WHERE devkey like "bflmpsvz" AND device like "38B760"
