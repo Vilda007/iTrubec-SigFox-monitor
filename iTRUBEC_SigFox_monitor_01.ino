@@ -83,6 +83,13 @@ void ReadBME() {
   myTlak1 = (bme.readPressure() / 100.0F);
 }
 
+int Correct(int nr){
+  //pripadne orezaní hodnoty na 0 az 255
+  if (nr < 0) nr = 0;
+  if (nr > 255) nr = 255;
+  return nr;
+}
+
 long readVcc() {//zjištění stavu baterie (napájení)
   #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
     ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
@@ -185,14 +192,20 @@ void loop()
     */
     //teploty a zaokrouhlíme na celá čísla a přičteme 50 (50 => 0 stupnu celsia)
     t1 = int(round(myTeplota1)+50);
+    t1 = Correct(t1);
     t2 = int(round(myTeplota2)+50);
+    t2 = Correct(t2);
     t3 = int(round(myTeplota3)+50);
+    t3 = Correct(t3);
     //vlhkost zaokrouhlíme na celé číslo
     v1 = int(round(myVlhkost1));
+    v1 = Correct(v1);
     //tlak zaokrouhlíme na celé číslo a odečteme od něj 885 (1013-128) => 128 odpovídá 1013 hPa
     p1 = int(round(myTlak1)-885);
+    p1 = Correct(p1);
     //napeti napajeni vynasobime 10 a zaokrouhlime na cele cislo
     n1 = int(round(Vcc*10));
+    n1 = Correct(n1);
     //naformatovani zpravy k odeslani pres sigfox
     sprintf(zprava, "%02X%02X%02X%02X%02X%02X", t1, t2, t3, v1, p1, n1);
     Serial.print("Sigfox tvar zpravy: ");
