@@ -1,6 +1,8 @@
 float myTeplota1, myTeplota2, myTeplota3, myTlak1, myVlhkost1, Vcc;
+char zprava[12], t1, t2, t3, v1, p1, n1; //SigFox zpráva a proměnné
 
 // potřebné knihovny
+#include <SoftwareSerial.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
 #include <avr/wdt.h>
@@ -8,6 +10,13 @@ float myTeplota1, myTeplota2, myTeplota3, myTlak1, myVlhkost1, Vcc;
 #include <Adafruit_BME280.h>
 #include "Wire.h"
 #include <DallasTemperature.h>
+
+// nastavení projojovacích pinů SigFox modulu
+#define TX 8
+#define RX 7
+
+// inicializace softwarové sériové linky z knihovny
+SoftwareSerial Sigfox(RX, TX);
 
 // nastaveni adresy senzoru
 #define BME280_ADRESA (0x76)
@@ -18,8 +27,8 @@ Adafruit_BME280 bme;
 #define ONE_WIRE_BUS_PIN 2 // onewire pro cidla DS18B20 na pinu (D)2
 OneWire oneWire(ONE_WIRE_BUS_PIN);
 DallasTemperature sensors(&oneWire);
-DeviceAddress Probe01 = { 0x28, 0xFF, 0x1C, 0x56, 0x02, 0x17, 0x04, 0x68 }; //Bílá
-DeviceAddress Probe02 = { 0x28, 0xFF, 0x12, 0x82, 0x02, 0x17, 0x03, 0x46 }; //Zlatá
+DeviceAddress Probe01 = { 0x28, 0xFF, 0x1C, 0x56, 0x02, 0x17, 0x04, 0x68 }; //Bílá - T2
+DeviceAddress Probe02 = { 0x28, 0xFF, 0x12, 0x82, 0x02, 0x17, 0x03, 0x46 }; //Zlatá - T3
 
 // zde se bude ukládat zda přišel impuls z watchdog timeru
 // hodnota 1 simuluje impuls po zapnutí, aby jsme nečekali
@@ -28,7 +37,7 @@ volatile int impuls_z_wdt = 1;
 volatile int citac_impulsu = 2;
 // zde nastavíme potřebný počet impulsů
 // podle nastavení WDT viz níže je jeden impuls 8 sekund
-volatile int impulsu_ke_spusteni = 2;
+volatile int impulsu_ke_spusteni = 75; // ...kazdych 10 minut
 
 /* klíčové slovo volatile říká kompilatoru jak má zacházet z proměnou
    načte proměné z paměti RAM a ne z paměťového registru. Vzhledem k
@@ -108,6 +117,10 @@ void setup()
   Serial.begin(9600);
   Serial.println("Seriova linka inicializovana");
 
+  // zahájení komunikace se SigFox modemem po softwarové sériové lince rychlostí 9600 baud
+  Sigfox.begin(9600);
+  Serial.println("SigFox linka inicializovana");
+
   //zahajeni komunikace s cidly DS18B20
   Wire.begin();
   Serial.println("Wire interface inicializován");
@@ -117,7 +130,6 @@ void setup()
   // nastaveni presnosti senzoru DS18B20 na 11 bitu (muze byt 9 - 12)
   sensors.setResolution(Probe01, 11);
   sensors.setResolution(Probe02, 11);
-  Serial.println("0");
 
   // zahajeni komunikace se senzorem BME280,
   // v pripade chyby je vypsana hlaska po seriove lince
@@ -162,6 +174,31 @@ void loop()
     Serial.print("Napajeni: ");
     Serial.print(Vcc);
     Serial.println(" V");
+    //Sestavení zpravy pro SigFox
+    /*
+     * Callback URL
+     * http://itrubec.cz/monitor/newdata.php?key=bflmpsvz&dev={device}&t1={customData#t1}&t2={customData#t2}&t3={customData#t3}&v1={customData#v1}&p2={customData#p1}&n1={customData#n1}&rssi={rssi}&seqn={seqNumber}&lat={lat}&lng={lng}
+     * Format zpravy
+     * t1::char:1 t2::char:1 t3::char:1 v1::char:1 p1::char:1 n1::char:1
+    */
+    //teploty zaokrouhlíme na celá čísla a přičteme k nim 50
+    t1 = char(int(round(myTeplota1))+50);
+    t2 = char(int(round(myTeplota3))+50);
+    t3 = char(int(round(myTeplota3))+50);
+    //vlhkost zaokrouhlíme na celé číslo
+    v1 = char(int(round(myVlhkost1)));
+    //tlak zaokrouhlíme na celé číslo a odečteme od něj 950 (1013 - 63)
+    p1 = char(int(round(myTlak1))-63);
+    //napeti napajeni vynasobime 10 a zaokrouhlime na cele cislo
+    n1 = char(int(round(myTlak1*10)));
+    //naformatovani zpravy k odeslani pres sigfox
+    sprintf(zprava, "%c%c%c%c%c%c", t1, t2, t3, v1, p1, n1);
+    Serial.print("Sigfox tvar zpravy: ");
+    Serial.println(zprava);
+    //odeslani zpravy do SigFox
+    Sigfox.print("AT$SF=");
+    Sigfox.println(zprava);
+    
     delay(3000);
     // konec kódu, který se v nastaveném intervalu bude provádět
     //////////////////////////////////////////////////////////////
