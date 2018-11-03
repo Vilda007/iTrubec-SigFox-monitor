@@ -1,4 +1,4 @@
-float myTeplota1, myTeplota2, myTeplota3, myTlak1, myVlhkost1;
+float myTeplota1, myTeplota2, myTeplota3, myTlak1, myVlhkost1, Vcc;
 
 // potřebné knihovny
 #include <avr/sleep.h>
@@ -73,6 +73,26 @@ void ReadBME() {
   myTlak1 = (bme.readPressure() / 100.0F);
 }
 
+long readVcc() {//zjištění stavu baterie (napájení)
+  #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  #elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
+    ADMUX = _BV(MUX5) | _BV(MUX0);
+  #elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+    ADMUX = _BV(MUX3) | _BV(MUX2);
+  #else
+    ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  #endif
+  delay(2);
+  ADCSRA |= _BV(ADSC);
+  while (bit_is_set(ADCSRA, ADSC));
+  uint8_t low = ADCL;
+  uint8_t high = ADCH;
+  long result = (high << 8) | low;
+  result = 1125300L / result; // Výpočet Vcc (mV); 1125300 = 1.1*1023*1000
+  return result;
+}
+
 void setup()
 {
   // nastavení WATCHDOG TIMERU
@@ -87,7 +107,7 @@ void setup()
   //inicializace sériové linky
   Serial.begin(9600);
   Serial.println("Seriova linka inicializovana");
- 
+
   //zahajeni komunikace s cidly DS18B20
   Wire.begin();
   Serial.println("Wire interface inicializován");
@@ -136,6 +156,12 @@ void loop()
     Serial.print("Tlak: ");
     Serial.print(myTlak1);
     Serial.println(" hPa");
+    //Zjisteni stavu baterie (napeti napajeni)
+    Vcc=readVcc(); //hodnota v mV
+    Vcc=ceil(Vcc/1000);//hodnota ve V
+    Serial.print("Napajeni: ");
+    Serial.print(Vcc);
+    Serial.println(" V");
     delay(3000);
     // konec kódu, který se v nastaveném intervalu bude provádět
     //////////////////////////////////////////////////////////////
