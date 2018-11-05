@@ -18,7 +18,6 @@ int t1, t2, t3, v1, p1, n1; //SigFox proměnné
 
 // inicializace softwarové sériové linky z knihovny
 SoftwareSerial Sigfox(RX, TX);
-
 // nastaveni adresy senzoru
 #define BME280_ADRESA (0x76)
 // inicializace senzoru BME z knihovny
@@ -35,10 +34,10 @@ DeviceAddress Probe02 = { 0x28, 0xFF, 0x12, 0x82, 0x02, 0x17, 0x03, 0x46 }; //Zl
 // hodnota 1 simuluje impuls po zapnutí, aby jsme nečekali
 volatile int impuls_z_wdt = 1;
 // zde se ukládají impulsy
-volatile int citac_impulsu = 75;
+volatile int citac_impulsu = 100;
 // zde nastavíme potřebný počet impulsů
 // podle nastavení WDT viz níže je jeden impuls 8 sekund
-volatile int impulsu_ke_spusteni = 75; // ...kazdych 10 minut
+volatile int impulsu_ke_spusteni = 100; // ...kazdych cca 15 minut
 
 /* klíčové slovo volatile říká kompilatoru jak má zacházet z proměnou
    načte proměné z paměti RAM a ne z paměťového registru. Vzhledem k
