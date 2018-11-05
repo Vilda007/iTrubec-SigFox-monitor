@@ -31,13 +31,13 @@ DeviceAddress Probe01 = { 0x28, 0xFF, 0x1C, 0x56, 0x02, 0x17, 0x04, 0x68 }; //B�
 DeviceAddress Probe02 = { 0x28, 0xFF, 0x12, 0x82, 0x02, 0x17, 0x03, 0x46 }; //Zlatá - T3
 
 // zde se bude ukládat zda přišel impuls z watchdog timeru
-// hodnota 1 simuluje impuls po zapnutí, aby jsme nečekali
+// hodnota 1 simuluje impuls po zapnutí, abychom nečekali
 volatile int impuls_z_wdt = 1;
 // zde se ukládají impulsy
-volatile int citac_impulsu = 100;
+volatile int citac_impulsu = 101;
 // zde nastavíme potřebný počet impulsů
 // podle nastavení WDT viz níže je jeden impuls 8 sekund
-volatile int impulsu_ke_spusteni = 100; // ...kazdych cca 15 minut
+volatile int impulsu_ke_spusteni = 101; // ...kazdych cca 15 minut
 
 /* klíčové slovo volatile říká kompilatoru jak má zacházet z proměnou
    načte proměné z paměti RAM a ne z paměťového registru. Vzhledem k
@@ -76,10 +76,12 @@ void ReadBME() {
   // Cteni vsech dostupnych informaci ze senzoru BMP
   // teplota
   myTeplota1 = (bme.readTemperature());
+  myTeplota1 = myTeplota1 - 0.7; //0.7 je kompenzace na obě čidla DS18B20
   // relativni vlhkost
   myVlhkost1 = (bme.readHumidity());
   // tlak s prepoctem na hektoPascaly
   myTlak1 = (bme.readPressure() / 100.0F);
+  myTlak1 = myTlak1 + 25; //25 hPA je kompenzace(kalibrace) stanovená porovnáním naměřených hodnot s oficiálním meteo spravodajstvím.
 }
 
 int Correct(int nr){
@@ -156,7 +158,7 @@ void loop()
   {
     ///////////////////////////////////////////////////////////////
     // zde je vlastní kód
-    delay(3000);
+    delay(1000);
     ReadBME(); //Cteni BME280
     sensors.requestTemperatures(); //Cteni DS18B20
     myTeplota2 = sensors.getTempC(Probe01);
@@ -187,9 +189,8 @@ void loop()
      * http://itrubec.cz/monitor/newdata.php?key=bflmpsvz&dev={device}&t1={customData#t1}&t2={customData#t2}&t3={customData#t3}&v1={customData#v1}&p2={customData#p1}&n1={customData#n1}&rssi={rssi}&seqn={seqNumber}&lat={lat}&lng={lng}
      * Format zpravy
      * t1::uint:8 t2::uint:8 t3::uint:8 v1::uint:8 p1::uint:8 n1::uint:8
-     * t1::int:8 t2::int:8 t3::int:8 v1::int:8 p1::int:8 n1::int:8
     */
-    //teploty a zaokrouhlíme na celá čísla a přičteme 50 (50 => 0 stupnu celsia)
+    //teploty zaokrouhlíme na celá čísla a přičteme 50 (50 => 0 stupnu celsia)
     t1 = int(round(myTeplota1)+50);
     t1 = Correct(t1);
     t2 = int(round(myTeplota2)+50);
@@ -213,7 +214,7 @@ void loop()
     Sigfox.print("AT$SF=");
     Sigfox.println(zprava);
     
-    delay(3000);
+    delay(2000);
     // konec kódu, který se v nastaveném intervalu bude provádět
     //////////////////////////////////////////////////////////////
 
