@@ -229,6 +229,15 @@ void loop()
     Serial.println("--------------HAJI-BUCI---------------");
     Serial.end();
     
+<<<<<<< HEAD
+=======
+    delay(2000);
+    
+    Sigfox.print("AT$P=2"); //SigFox deep sleep mode
+    Sigfox.end();
+    Serial.end();
+    
+>>>>>>> 82120c13a10a91ce93bef933a4fde60a4f5061d3
     // konec kódu, který se v nastaveném intervalu bude provádět
     //////////////////////////////////////////////////////////////
 
