@@ -31,10 +31,9 @@ DeviceAddress Probe01 = { 0x28, 0xFF, 0x1C, 0x56, 0x02, 0x17, 0x04, 0x68 }; //B�
 DeviceAddress Probe02 = { 0x28, 0xFF, 0x12, 0x82, 0x02, 0x17, 0x03, 0x46 }; //Zlatá - T3
 
 // zde se bude ukládat zda přišel impuls z watchdog timeru
-// hodnota 1 simuluje impuls po zapnutí, abychom nečekali
 volatile int impuls_z_wdt = 1;
 // zde se ukládají impulsy
-volatile int citac_impulsu = 101;
+volatile int citac_impulsu = 101; // hodnota 101 simuluje impuls po zapnutí, abychom nečekali
 // zde nastavíme potřebný počet impulsů
 // podle nastavení WDT viz níže je jeden impuls 8 sekund
 volatile int impulsu_ke_spusteni = 101; // ...kazdych cca 15 minut
@@ -122,17 +121,6 @@ void setup()
 
   WDTCSR |= _BV(WDIE); //neřešte
 
-  //inicializace sériové linky
-  Serial.begin(9600);
-  Serial.println("Seriova linka inicializovana");
-
-  // zahájení komunikace se SigFox modemem po softwarové sériové lince rychlostí 9600 baud
-  Sigfox.begin(9600);
-  Serial.println("SigFox linka inicializovana");
-
-  //zahajeni komunikace s cidly DS18B20
-  Wire.begin();
-  Serial.println("Wire interface inicializován");
   sensors.begin();
   Serial.println("Senzors interface inicializovan");
 
@@ -158,6 +146,19 @@ void loop()
   {
     ///////////////////////////////////////////////////////////////
     // zde je vlastní kód
+    
+    //inicializace sériové linky
+    Serial.begin(9600);
+    Serial.println("Seriova linka inicializovana");
+
+    // zahájení komunikace se SigFox modemem po softwarové sériové lince rychlostí 9600 baud
+    Sigfox.begin(9600);
+    Serial.println("SigFox linka inicializovana");
+  
+    //zahajeni komunikace s cidly DS18B20
+    Wire.begin();
+    Serial.println("Wire interface inicializován");
+    
     delay(1000);
     ReadBME(); //Cteni BME280
     sensors.requestTemperatures(); //Cteni DS18B20
@@ -215,6 +216,11 @@ void loop()
     Sigfox.println(zprava);
     
     delay(2000);
+    
+    Sigfox.print("AT$P=2"); //SigFox deep sleep mode
+    Sigfox.end();
+    Serial.end();
+    
     // konec kódu, který se v nastaveném intervalu bude provádět
     //////////////////////////////////////////////////////////////
 
